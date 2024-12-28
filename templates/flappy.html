@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Game and Webcam</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">  
+  <style>
+    body {
+      margin: 0;
+      font-family:  'Press Start 2P', cursive;
+      background-color: #004985;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+
+
+     
+      background-image: radial-gradient(circle, black 1px, transparent 1px);
+      background-size: 20px 20px;
+      height: 100vh; 
+    }
+
+    h1 {
+      font-size: 36px;
+      color: white;
+      text-align: center;
+      margin-bottom: 20px;
+      
+    }
+
+    .main-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      width: 90vw;
+      max-width: 1200px;
+    }
+
+    .game-container,
+    .webcam-container {
+      flex: 1 1 calc(50% - 20px);
+      max-width: 600px; 
+      aspect-ratio: 3 / 3.5; 
+      background-color: #70c5ce;
+      border: 4px solid #333;
+     
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+   
+    
+    
+
+    
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #score {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 18px;
+      color: white;
+      font-weight: bold;
+      z-index: 1;
+    }
+
+    #restartBtn {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px 20px;
+      font-size: 16px;
+      background-image: radial-gradient(circle, rgb(255, 187, 0) 1px, transparent 1px);
+      background-size: 7px 7px;
+      background-color: #ffcc00;
+      border: none;
+      border: 4px solid #333;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      font-family:  'Press Start 2P', cursive;
+    
+    }
+
+    #restartBtn:hover {
+      background-color: #ffdd33;
+    }
+
+    .video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- heading -->
+  <h1>Happy Bird</h1>
+  
+
+
+  <div class="main-container">
+    <!-- game container -->
+    <div class="game-container">
+      <div id="score">Score: 0</div>
+      <canvas id="gameCanvas"></canvas>
+      <button id="restartBtn">RESTART</button>
+    </div>
+
+    <!-- webcam container -->
+    <div class="webcam-container" style="transform: scaleX(-1); z-index: -1;">
+      <img class="video" src="/video_feed" alt="Video Feed">
+    </div>
+    <p id="status" style="color: white;">Smile Status: Loading...</p>
+  </div>
+
+  <script>
+    // game logic
+    const container = document.querySelector('.game-container');
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const restartBtn = document.getElementById('restartBtn');
+    const scoreDiv = document.getElementById('score');
+
+    //canvas size to match the container
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+
+    const bird = {
+      x: 50,
+      y: canvas.height / 2,
+      width: 20,
+      height: 20,
+      gravity: 0.03,
+      lift: -2,
+      velocity: -1
+    };
+
+    const pipes = [];
+    const pipeGap = 200;
+    const pipeSpacing = 300;
+    const pipeWidth = 50;
+    const pipeSpeed = 2;
+
+    let score = 0;
+    let gameOver = false;
+
+    function createPipe() {
+      const pipeTopHeight = Math.random() * (canvas.height / 2) + 50;
+      pipes.push({
+        x: canvas.width,
+        top: pipeTopHeight,
+        bottom: canvas.height - pipeTopHeight - pipeGap
+      });
+    }
+
+    function drawBird() {
+      ctx.fillStyle = 'yellow';
+      ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+    }
+
+    function drawPipes() {
+  ctx.fillStyle = 'green';
+  ctx.strokeStyle = 'black';  
+  ctx.lineWidth = 1;  
+  
+  pipes.forEach(pipe => {
+   
+    ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top); 
+    ctx.strokeRect(pipe.x, 0, pipeWidth, pipe.top); 
+
+ 
+    ctx.fillRect(pipe.x, canvas.height - pipe.bottom, pipeWidth, pipe.bottom); 
+    ctx.strokeRect(pipe.x, canvas.height - pipe.bottom, pipeWidth, pipe.bottom); 
+  });
+}
+
+    function updateBird() {
+      bird.velocity += bird.gravity;
+      bird.y += bird.velocity;
+
+      if (bird.y + bird.height > canvas.height || bird.y < 0) {
+        gameOver = true;
+      }
+    }
+
+    function updatePipes() {
+      pipes.forEach((pipe, index) => {
+        pipe.x -= pipeSpeed;
+
+        if (pipe.x + pipeWidth < 0) {
+          pipes.splice(index, 1);
+          score++;
+          scoreDiv.textContent = `Score: ${score}`;
+        }
+
+        if (
+          bird.x < pipe.x + pipeWidth &&
+          bird.x + bird.width > pipe.x &&
+          (bird.y < pipe.top || bird.y + bird.height > canvas.height - pipe.bottom)
+        ) {
+          gameOver = true;
+        }
+      });
+
+      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - pipeSpacing) {
+        createPipe();
+      }
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = '#70c5ce';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function gameLoop() {
+      if (gameOver) {
+        endGame();
+        return;
+      }
+
+      drawBackground();
+      drawPipes();
+      drawBird();
+      updateBird();
+      updatePipes();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    function endGame() {
+      restartBtn.style.display = 'block';
+      scoreDiv.textContent = `Game Over! Your score: ${score}`;
+   
+    }
+
+    function resetGame() {
+      bird.y = canvas.height / 2;
+      bird.velocity = 0;
+      pipes.length = 0;
+      score = 0;
+      scoreDiv.textContent = `Score: ${score}`;
+      createPipe();
+      gameOver = false;
+      restartBtn.style.display = 'none';
+      gameLoop();
+    }
+
+    document.addEventListener('keydown', () => {
+      bird.velocity = bird.lift;
+    });
+    
+
+    
+
+   
+    restartBtn.addEventListener('click', resetGame);
+
+    createPipe();
+    gameLoop();
+
+    window.addEventListener('resize', () => {
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      resetGame();
+    });
+
+
+    const statusElement = document.getElementById("status");
+const eventSource = new EventSource("/smile_status");
+
+eventSource.onmessage = function(event) {
+
+    const data = event.data.match(/\d+/);
+    const smileStatus = data ? parseInt(data[0], 10) : NaN;
+
+    if (!isNaN(smileStatus)) {
+        statusElement.textContent = `Smile Status: ${smileStatus}`;
+        
+        // lift if smileStatus is 1
+        if (smileStatus === 1) {
+            bird.velocity = bird.lift;
+        }
+    } else {
+        statusElement.textContent = "Smile Status: Invalid data";
+    }
+};
+
+eventSource.onerror = function() {
+    statusElement.textContent = "Smile Status: Disconnected";
+};
+
+  </script>
+</body>
+</html>
