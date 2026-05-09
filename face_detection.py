@@ -49,7 +49,7 @@ with mp_face_mesh.FaceMesh(
                     connection_drawing_spec=mp_drawing_styles
                     .get_default_face_mesh_tesselation_style())
                 
-            #   print(list(face_landmarks.landmark)) for testing
+           
             
                 # flip the image horizontally for a selfie-view display.
                 cv2.imshow('MediaPipe Face Mesh', cv2.flip(image, 1))
