@@ -172,8 +172,10 @@
     }
 
     function drawBird() {
-      ctx.fillStyle = 'yellow';
-      ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+      
+      ctx.font = `${bird.height}px Arial`;
+      ctx.textBaseline = 'top';
+      ctx.fillText('🐥', bird.x, bird.y);
     }
 
     function drawPipes() {
