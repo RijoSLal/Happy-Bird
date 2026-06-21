@@ -98,4 +98,4 @@ Simple stack. Real-time inference. Zero buttons required.
 
 ## License
 
-MIT — fork it, smile at it, make it your own.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details. Fork it, smile at it, make it your own.
